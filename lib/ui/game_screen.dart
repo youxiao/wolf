@@ -7,6 +7,7 @@ import '../game/ai_personality.dart';
 import '../game/roles.dart';
 import '../game/cinematic_event.dart';
 import '../services/audio_director.dart';
+import '../services/window_controller.dart';
 import 'kit.dart';
 import 'cinematic_overlay.dart';
 
@@ -131,7 +132,15 @@ class _GameScreenState extends State<GameScreen> {
     setState(() {});
   }
 
-  void _narrate() {
+  // 夜间每位角色完成行动后，只播报一句「<角色>，请闭眼」，不再念整段交接词。
+  static const closeEyesKeys = {
+    Phase.guard: 'guard_close',
+    Phase.wolves: 'wolves_close',
+    Phase.seer: 'seer_close',
+    Phase.witch: 'witch_close',
+  };
+
+  void _narrate({bool manual = false}) {
     if (!mounted ||
         showingPrivateResult ||
         cinematic != null ||
@@ -146,7 +155,14 @@ class _GameScreenState extends State<GameScreen> {
       return;
     }
     if (g.awaitingNightConfirmation) {
-      widget.audio.narrate('night_done');
+      widget.audio.narrate(closeEyesKeys[g.phase] ?? 'night_done');
+      return;
+    }
+    // 围炉聚会投票：整段「发言结束」只在阶段开始时播报一次。
+    // 之后依次传递设备投票的交接（voteIndex 递增）不再重复同一段提示，
+    // 而是静音收尾，避免每位玩家都听到一遍「发言结束」。
+    if (!manual && g.local && g.phase == Phase.vote && g.voteIndex > 0) {
+      widget.audio.stopVoice();
       return;
     }
     final key = g.phase == Phase.ended
@@ -696,7 +712,7 @@ class _GameScreenState extends State<GameScreen> {
                           key: const ValueKey('speech-focus-text'),
                           style: TextStyle(
                             color: cream,
-                            fontSize: c.maxWidth >= 500 ? 19 : 16,
+                            fontSize: 16,
                             height: 1.85,
                           ),
                         ),
@@ -740,8 +756,8 @@ class _GameScreenState extends State<GameScreen> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: active ? gold : cream,
-                                fontSize: 13,
-                                height: 1.7,
+                                fontSize: 16,
+                                height: 1.6,
                               ),
                             ),
                           ),
@@ -959,6 +975,8 @@ class _GameScreenState extends State<GameScreen> {
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(color: gold, fontSize: 11, height: 1.6),
       );
+      // 单人模式下，玩家必须先完成发言（指认或观望）才能进入投票阶段。
+      final mustSpeakFirst = !g.local && g.me.alive && !_hasSpoken;
       final submit = GameButton(
         _hasSpoken
             ? '发言已记录'
@@ -968,18 +986,22 @@ class _GameScreenState extends State<GameScreen> {
         key: const ValueKey('discussion-submit'),
         onTap: g.me.alive && !_hasSpoken ? _submitSpeech : null,
         primary: false,
-        small: true,
         width: double.infinity,
       );
       final next = GameButton(
         inline
-            ? (!g.local && !g.me.alive ? '结束发言 · 观看投票' : '结束发言 · 开始投票')
+            ? (!g.local && !g.me.alive
+                ? '结束发言 · 观看投票'
+                : mustSpeakFirst
+                ? '发言后进入投票'
+                : '结束发言 · 开始投票')
             : !g.local && !g.me.alive
             ? '观看投票'
+            : mustSpeakFirst
+            ? '发言后进入投票'
             : '开始投票',
         key: const ValueKey('discussion-continue'),
-        onTap: _continue,
-        small: true,
+        onTap: mustSpeakFirst ? null : _continue,
         width: double.infinity,
       );
       final more = PopupMenuButton<String>(
@@ -998,11 +1020,11 @@ class _GameScreenState extends State<GameScreen> {
                   Expanded(child: status),
                   if (!g.local) ...[
                     const SizedBox(width: 12),
-                    SizedBox(width: tight ? 128 : 160, child: submit),
+                    SizedBox(width: tight ? 140 : 176, child: submit),
                   ],
                   if (reveal) SizedBox(width: 40, child: more),
                   const SizedBox(width: 8),
-                  SizedBox(width: tight ? 210 : 240, child: next),
+                  SizedBox(width: tight ? 220 : 280, child: next),
                 ],
               )
             : Column(
@@ -1453,13 +1475,28 @@ class _GameScreenState extends State<GameScreen> {
         ),
         IconButton(
           tooltip: '重播主持语音',
-          onPressed: _narrate,
+          onPressed: () => _narrate(manual: true),
           icon: const Icon(
             Icons.record_voice_over_outlined,
             color: muted,
             size: 20,
           ),
         ),
+        if (WindowController.instance.isSupported)
+          ValueListenableBuilder<bool>(
+            valueListenable: WindowController.instance.fullScreen,
+            builder: (_, isFs, __) => IconButton(
+              tooltip: isFs ? '退出全屏' : '全屏',
+              onPressed: () => WindowController.instance.toggle(),
+              icon: Icon(
+                isFs
+                    ? Icons.fullscreen_exit_rounded
+                    : Icons.fullscreen_rounded,
+                color: gold,
+                size: 20,
+              ),
+            ),
+          ),
         IconButton(
           tooltip: '声音设置',
           onPressed: widget.onSettings,

@@ -1,6 +1,7 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <variant>
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -26,6 +27,37 @@ bool FlutterWindow::OnCreate() {
   }
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
+
+  // Set up a method channel so the Dart side can control the native window,
+  // e.g. toggle fullscreen mode.
+  window_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(), "moonveil/window",
+          &flutter::StandardMethodCodec::GetInstance());
+  window_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        const std::string& method = call.method_name();
+        if (method == "toggleFullScreen") {
+          const auto* args = std::get_if<bool>(call.arguments());
+          const bool target = args != nullptr ? *args : !IsFullScreen();
+          SetFullScreen(target);
+          result->Success(flutter::EncodableValue(target));
+        } else if (method == "setFullScreen") {
+          const auto* args = std::get_if<bool>(call.arguments());
+          if (args == nullptr) {
+            result->Error("bad_args", "Expected a bool argument.");
+            return;
+          }
+          SetFullScreen(*args);
+          result->Success(flutter::EncodableValue(*args));
+        } else if (method == "isFullScreen") {
+          result->Success(flutter::EncodableValue(IsFullScreen()));
+        } else {
+          result->NotImplemented();
+        }
+      });
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();

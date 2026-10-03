@@ -1,4 +1,4 @@
-#include <flutter/dart_project.h>
+﻿#include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
@@ -27,7 +27,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1360, 920);
-  if (!window.Create(L"月隐 · 狼人杀", origin, size)) {
+  // 使用 Unicode 转义序列书写标题，避免源码编码（UTF-8）在 MSVC
+  // 下被按本地代码页解析而产生乱码。
+  if (!window.Create(L"\u6708\u9690 \u00B7 \u72FC\u4EBA\u6740", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

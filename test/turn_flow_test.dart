@@ -161,6 +161,68 @@ void main() {
   }
 
   testWidgets(
+    'local vote narrates 发言结束 once and hands off silently',
+    (tester) async {
+      final g = GameEngine.create(local: true, seed: 3);
+      g.phase = Phase.vote;
+      g.voteIndex = 0;
+      g.votes.clear();
+      final audio = RecordingAudio();
+      await showGame(tester, g, audio, const Size(390, 844));
+
+      int voteClips() => audio.narration
+          .where((keys) => keys.length == 1 && keys.first == 'vote')
+          .length;
+
+      // 进入投票阶段时，整段「发言结束」只播报一次。
+      expect(voteClips(), 1);
+      final first = g.actor!;
+      expect(first.id, g.alive.first.id);
+
+      // 第一位玩家独自查看并投出自己的选票。
+      await tap(tester, '独自查看');
+      final other = g.alive.firstWhere((p) => p.id != first.id);
+      final seat = find.byKey(ValueKey('seat-${other.id}'));
+      await tester.ensureVisible(seat);
+      await tester.tap(seat);
+      await tester.pumpAndSettle();
+      await tap(tester, '确认投票');
+
+      expect(g.voteIndex, 1);
+      expect(g.votes[first.id], other.id);
+      // 交接给下一位投票人时不得重复播报「发言结束」。
+      expect(voteClips(), 1);
+      expect(find.text('独自查看'), findsOneWidget);
+      expect(g.actor?.id, g.alive[1].id);
+
+      await tester.pumpWidget(const SizedBox());
+      g.dispose();
+      audio.dispose();
+    },
+  );
+
+  for (final entry in const {
+    Phase.guard: 'guard_close',
+    Phase.wolves: 'wolves_close',
+    Phase.seer: 'seer_close',
+    Phase.witch: 'witch_close',
+  }.entries) {
+    testWidgets('night hand-off narrates only ${entry.value}', (tester) async {
+      final g = GameEngine.create(local: true, seed: 5);
+      g.phase = entry.key;
+      g.awaitingNightConfirmation = true;
+      final audio = RecordingAudio();
+      await showGame(tester, g, audio, const Size(390, 844));
+      // 角色发动完技能后，只留一句「<角色>，请闭眼」。
+      expect(audio.narration.last, [entry.value]);
+      expect(audio.narration.any((keys) => keys.contains('night_done')), false);
+      await tester.pumpWidget(const SizedBox());
+      g.dispose();
+      audio.dispose();
+    });
+  }
+
+  testWidgets(
     'local seer must acknowledge private result before witch opens eyes',
     (tester) async {
       final g = GameEngine.create(local: true, seed: 8);
@@ -183,7 +245,9 @@ void main() {
       expect(find.text('水晶中的真相 · 仅你可见'), findsOneWidget);
       expect(find.text(g.privateResult!), findsOneWidget);
       expect(find.text('女巫，请选择'), findsNothing);
-      expect(audio.narration.last, ['night_done']);
+      // 行动结束后只播报一句「预言家，请闭眼」，不再念整段交接词。
+      expect(audio.narration.last, ['seer_close']);
+      expect(audio.narration.any((keys) => keys.contains('night_done')), false);
       expect(audio.narration.any((keys) => keys.contains('witch')), false);
       await tap(tester, '确认行动完成 · 闭眼');
       expect(g.phase, Phase.witch);

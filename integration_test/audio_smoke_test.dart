@@ -26,6 +26,10 @@ void main() {
       for (final key in [
         'dawn',
         'night_done',
+        'guard_close',
+        'wolves_close',
+        'seer_close',
+        'witch_close',
         'deaths_intro',
         'deaths_outro',
         for (int i = 1; i <= 12; i++) 'seat_$i',

@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'game/engine.dart';
 import 'game/roles.dart';
 import 'services/audio_director.dart';
+import 'services/window_controller.dart';
 import 'ui/kit.dart';
 import 'ui/game_screen.dart';
 import 'ui/hero_selector.dart';
@@ -21,37 +22,50 @@ void main() {
       systemNavigationBarColor: ink,
     ),
   );
+  // 读取一次原生窗口全屏状态（桌面端）。
+  WindowController.instance.init();
   runApp(const MoonveilApp());
 }
 
 class MoonveilApp extends StatelessWidget {
   const MoonveilApp({super.key});
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: '月隐 · 狼人杀',
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      brightness: Brightness.dark,
-      useMaterial3: true,
-      scaffoldBackgroundColor: ink,
-      colorScheme: const ColorScheme.dark(
-        primary: gold,
-        surface: panel,
-        onSurface: cream,
+  Widget build(BuildContext context) => Focus(
+    autofocus: true,
+    onKeyEvent: (node, event) {
+      if (event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.f11) {
+        WindowController.instance.toggle();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    },
+    child: MaterialApp(
+      title: '月隐 · 狼人杀',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        scaffoldBackgroundColor: ink,
+        colorScheme: const ColorScheme.dark(
+          primary: gold,
+          surface: panel,
+          onSurface: cream,
+        ),
+        fontFamily: 'NotoSerifSC',
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(fontSize: 13, color: cream, height: 1.8),
+          bodySmall: TextStyle(fontSize: 11, color: muted, height: 1.7),
+        ),
+        sliderTheme: const SliderThemeData(
+          activeTrackColor: gold,
+          thumbColor: gold,
+          inactiveTrackColor: line,
+        ),
+        tooltipTheme: const TooltipThemeData(textStyle: TextStyle(color: ink)),
       ),
-      fontFamily: 'NotoSerifSC',
-      textTheme: const TextTheme(
-        bodyMedium: TextStyle(fontSize: 13, color: cream, height: 1.8),
-        bodySmall: TextStyle(fontSize: 11, color: muted, height: 1.7),
-      ),
-      sliderTheme: const SliderThemeData(
-        activeTrackColor: gold,
-        thumbColor: gold,
-        inactiveTrackColor: line,
-      ),
-      tooltipTheme: const TooltipThemeData(textStyle: TextStyle(color: ink)),
+      home: const GameShell(),
     ),
-    home: const GameShell(),
   );
 }
 
@@ -344,6 +358,24 @@ class _GameShellState extends State<GameShell> {
             ),
           const SizedBox(width: 24),
         ],
+        if (WindowController.instance.isSupported)
+          ValueListenableBuilder<bool>(
+            valueListenable: WindowController.instance.fullScreen,
+            builder: (_, isFs, __) => IconButton(
+              tooltip: isFs ? '退出全屏' : '全屏',
+              onPressed: () {
+                audio.start();
+                WindowController.instance.toggle();
+              },
+              icon: Icon(
+                isFs
+                    ? Icons.fullscreen_exit_rounded
+                    : Icons.fullscreen_rounded,
+                color: gold,
+                size: 21,
+              ),
+            ),
+          ),
         IconButton(
           tooltip: '设置',
           onPressed: () {

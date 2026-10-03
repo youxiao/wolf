@@ -263,6 +263,53 @@ void Win32Window::SetQuitOnClose(bool quit_on_close) {
   quit_on_close_ = quit_on_close;
 }
 
+bool Win32Window::IsFullScreen() const {
+  return is_fullscreen_;
+}
+
+void Win32Window::SetFullScreen(bool fullscreen) {
+  if (!window_handle_ || fullscreen == is_fullscreen_) {
+    return;
+  }
+
+  if (fullscreen) {
+    // Remember the current window style and placement so we can restore them
+    // when leaving fullscreen.
+    style_before_fullscreen_ =
+        static_cast<LONG>(GetWindowLongPtr(window_handle_, GWL_STYLE));
+    ex_style_before_fullscreen_ =
+        static_cast<LONG>(GetWindowLongPtr(window_handle_, GWL_EXSTYLE));
+    placement_before_fullscreen_.length = sizeof(WINDOWPLACEMENT);
+    GetWindowPlacement(window_handle_, &placement_before_fullscreen_);
+
+    // Cover the nearest monitor without any border or title bar.
+    HMONITOR monitor =
+        MonitorFromWindow(window_handle_, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO monitor_info{};
+    monitor_info.cbSize = sizeof(MONITORINFO);
+    GetMonitorInfo(monitor, &monitor_info);
+    const RECT area = monitor_info.rcMonitor;
+
+    const LONG style = style_before_fullscreen_ & ~WS_OVERLAPPEDWINDOW;
+    const LONG ex_style = ex_style_before_fullscreen_ & ~WS_EX_DLGMODALFRAME;
+    SetWindowLongPtr(window_handle_, GWL_STYLE, style);
+    SetWindowLongPtr(window_handle_, GWL_EXSTYLE, ex_style);
+    SetWindowPos(window_handle_, HWND_TOP, area.left, area.top,
+                 area.right - area.left, area.bottom - area.top,
+                 SWP_FRAMECHANGED | SWP_NOACTIVATE);
+    is_fullscreen_ = true;
+  } else {
+    // Restore the previous window style and placement.
+    SetWindowLongPtr(window_handle_, GWL_STYLE, style_before_fullscreen_);
+    SetWindowLongPtr(window_handle_, GWL_EXSTYLE, ex_style_before_fullscreen_);
+    SetWindowPlacement(window_handle_, &placement_before_fullscreen_);
+    SetWindowPos(window_handle_, nullptr, 0, 0, 0, 0,
+                 SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                     SWP_NOACTIVATE);
+    is_fullscreen_ = false;
+  }
+}
+
 bool Win32Window::OnCreate() {
   // No-op; provided for subclasses.
   return true;

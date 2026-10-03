@@ -52,6 +52,14 @@ class Win32Window {
   // If true, closing this window will quit the application.
   void SetQuitOnClose(bool quit_on_close);
 
+  // Toggles borderless fullscreen mode. When entering fullscreen the window
+  // is stretched over the nearest monitor and its title bar / borders are
+  // hidden; when leaving, the previous style and placement are restored.
+  void SetFullScreen(bool fullscreen);
+
+  // Returns whether the window is currently in fullscreen mode.
+  bool IsFullScreen() const;
+
   // Return a RECT representing the bounds of the current client area.
   RECT GetClientArea();
 
@@ -91,6 +99,14 @@ class Win32Window {
   static void UpdateTheme(HWND const window);
 
   bool quit_on_close_ = false;
+
+  // Whether the window is currently in fullscreen mode.
+  bool is_fullscreen_ = false;
+
+  // Saved window state, used to restore the window when leaving fullscreen.
+  LONG style_before_fullscreen_ = 0;
+  LONG ex_style_before_fullscreen_ = 0;
+  WINDOWPLACEMENT placement_before_fullscreen_{};
 
   // window handle for top level window.
   HWND window_handle_ = nullptr;
