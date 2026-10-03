@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-03",
+  "flutter": "3.47.5",
+  "dart": "3.13.4",
+  "analysis": "No issues found",
+  "automated_tests_passed": 49,
+  "seeded_simulations": 200,
+  "native_audio_test": "Passed on macOS: 16 dawn clips + 9 effects decoded; actual sequential two-seat dawn narration, cancellation, rapid phase changes, replay, gunshot and ambience playback",
+  "builds": {
+    "macos": "Release arm64 + x86_64; local ad-hoc signature resealed and deep strict verification passed",
+    "ios": "Release development-signed; bundle signature and newly bundled sprites/sound verified; installed on physical iOS 27 iPhone",
+    "android": "Release APK passed with FVM Flutter 3.47.5, Gradle 8.14, AGP 8.11.1, Kotlin 2.2.20; local debug key",
+    "web": "Release build and Wasm dry run passed with Flutter 3.47.5"
+  },
+  "mobile_devices": "Current final iPhone app installed; current launch verification pending because device is locked. Previous SDK upgrade Release initial and independent cold launch passed. Android hardware not tested.",
+  "windows_linux": "Scaffolds present; builds not verified on those systems",
+  "screenshots": "27 Flutter-rendered previews using bundled images and fonts, including portrait/landscape/desktop actions and mobile social profiles",
+  "files": {
+    "moonveil-macos.zip": {
+      "bytes": 64557325,
+      "sha256": "dd451a351b51a3eb5261b992fc209387c3dfdace6b4f70c978e28f75484b8fd7"
+    },
+    "moonveil-android.apk": {
+      "bytes": 98580929,
+      "sha256": "6142a1c43aea0f6ef4f17ff8a458738b15cdba628a7535c67bff0679d1b4136f"
+    }
+  },
+  "sdk_upgrade": {
+    "date": "2026-10-02",
+    "flutter": "3.47.5",
+    "dart": "3.13.4",
+    "manager": "FVM (.fvmrc)",
+    "analysis": "No issues found",
+    "automated_tests_passed": 21,
+    "macos_release": "Build passed after removing stale macOS build cache",
+    "native_audio_test": "passed on macOS with Flutter 3.47.5",
+    "ios_debug": "Signed build and launch succeeded; wireless VM service connection did not complete. JIT SIGBUS recorded after interrupting debugger session; hot reload not verified.",
+    "ios_release": "Signed build, physical iOS 27 install, initial launch and independent cold relaunch succeeded; process verified after launch.",
+    "initial_crash": "Confirmed com.moonveil.moonveil SIGTRAP at UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption, before game launch",
+    "fix": "UIScene manifest + FlutterImplicitEngineDelegate plugin registration; FVM 3.47.5 SDK and VS Code configuration",
+    "android_web": "Earlier release artifacts remain from Flutter 3.27.1; not rebuilt during iOS fix"
+  },
+  "initial_release": {
+    "date": "2026-10-02",
+    "flutter": "3.27.1",
+    "dart": "3.6.0",
+    "analysis": "No issues found",
+    "automated_tests_passed": 21,
+    "builds": {
+      "macos": "Release arm64 + x86_64, code signature verified",
+      "android": "Release APK signed with local debug key",
+      "ios": "Release no codesign, build passed",
+      "web": "Release build passed"
+    },
+    "files": {
+      "moonveil-macos.zip": {
+        "bytes": 51801677,
+        "sha256": "187510630216a38fc6cbafae91ec5996016da01a31bee1af7660b93759bd1023"
+      },
+      "moonveil-android.apk": {
+        "bytes": 57621993,
+        "sha256": "e8991a68b932d203a7ca8db33360d2093efef60badd98d4c8ad4824eeb9c9592"
+      }
+    }
+  },
+  "gameplay_and_visuals": {
+    "night_confirmation": "Explicit acknowledgement before next role; seer private result retained",
+    "dead_solo_vote": "No ballot or abstention; invalid stale ballots removed",
+    "dawn": "Centered announcement with actual seat-number Chinese voice queue",
+    "cinematics": "9 scenes; wolf/hunter 3-frame identity-based sprites + full-body target figurines, effects and reduced motion; neutral avatars protect hidden roles",
+    "relationships": "Each AI keeps -100..100 affinity; target -12, actual same vote +5, abstain/spectator unchanged; save compatible",
+    "dialogue": "6 temperaments, 74 base templates plus public vote/role-check context; avoids consecutive repeats",
+    "hero_selection": "ImageGen transparent full-body figurine cards with plinths and glow"
+  }
+}

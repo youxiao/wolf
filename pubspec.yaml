@@ -1,0 +1,31 @@
+name: moonveil
+description: 月隐 · 经典狼人杀，一场发生在月光下的推理游戏。
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+  flutter: '>=3.47.5'
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  audioplayers: 6.1.0
+  # 6.4+ leaks AVPlayerItem continuations for short sequential voice clips.
+  # https://github.com/bluefireteam/audioplayers/issues/1982
+  audioplayers_darwin: 6.3.0
+  shared_preferences: 2.3.4
+dev_dependencies:
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/audio/
+  fonts:
+    - family: NotoSerifSC
+      fonts:
+        - asset: assets/fonts/NotoSerifSC.ttf

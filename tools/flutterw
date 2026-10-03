@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+sdk_dir="$project_dir/.fvm/flutter_sdk"
+if [[ ! -x "$sdk_dir/bin/flutter" ]]; then
+  echo "缺少项目 SDK，请执行：fvm use 3.47.5" >&2
+  exit 1
+fi
+exec "$sdk_dir/bin/flutter" "$@"
